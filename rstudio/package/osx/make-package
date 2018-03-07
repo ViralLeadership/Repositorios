@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+set -e
+
+PACKAGE_DIR=`pwd`
+
+BUILD_DIR=$(pwd)/build
+
+# find package source folder
+PKG_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+if [ "$1" == "clean" ]
+then
+   # remove existing build dir
+   rm -rf "$BUILD_DIR"
+   
+   # clean out ant build if
+   if [ -d "../../src/gwt" ]; then
+      cd ../../src/gwt
+      ant clean
+   fi
+   cd $PACKAGE_DIR
+fi
+
+mkdir -p $BUILD_DIR/gwt
+cd $BUILD_DIR
+rm -f CMakeCache.txt
+rm -rf build/_CPack_Packages
+
+# if we have a 10.7 SDK, we can produce a Snow Leopard-compatible build
+if [ -x /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk ]; then
+   export CMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk
+   export CMAKE_OSX_DEPLOYMENT_TARGET="10.6"
+fi
+
+cmake -DRSTUDIO_TARGET=Desktop \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DRSTUDIO_PACKAGE_BUILD=1 \
+      -DGWT_BIN_DIR="$BUILD_DIR/gwt/bin" \
+      -DGWT_WWW_DIR="$BUILD_DIR/gwt/www" \
+      -DGWT_EXTRAS_DIR="$BUILD_DIR/gwt/extras" \
+      $PKG_DIR/../..
+
+MAKEFLAGS="$MAKEFLAGS -j$(sysctl -n hw.ncpu)"
+
+echo "Building with flags $MAKEFLAGS..."
+make $MAKEFLAGS
+
+cpack -G DragNDrop
+
+cd $PACKAGE_DIR

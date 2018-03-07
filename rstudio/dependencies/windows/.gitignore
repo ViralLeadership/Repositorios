@@ -1,0 +1,14 @@
+mingw64*/
+boost*win*/
+boost-*
+gnudiff/
+gnugrep/
+msys_ssh/
+msys-ssh*/
+hunspell/
+sumatra/
+winutils/
+rtools*
+winpty*/
+openssl*/
+*.zip
